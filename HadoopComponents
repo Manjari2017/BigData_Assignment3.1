@@ -1,0 +1,59 @@
+Assignment 3.1: List the Components of Hadoop 2.x and explain each component in detail.
+
+Components of Hadoop 2.x
+
+NameNode: 
+NameNode also known as master node in the distributed environment. Manage file system namespace.
+It maintains the metadata. i.e. filename, path, number of blocks, ids, block location, no. of replicas, slave (or data node) related info. 
+Meta-data is present in memory in the master to provide faster retrieval of data.
+NameNode manages Data nodes, by assigns tasks etc. 
+Execution of file system operations such as rename, open and close files and directories. Regulates client’s access to files.
+NameNode should be highly reliable comparing with Data Nodes, so it requires high configured hardware. 
+NameNode stores metadata Files which are FsImage and EditLogs:
+FsImage (file system image) –
+•	FsImage is an “Image file”. It contains all directory structure of HDFS. Contains entire filesystem namespace and stored as a file in the namenode’s local file system. 
+•	It also contains a serialized form of all the directories and file inodes in the filesystem. 
+•	Each inode is an internal representation of file or directory’s metadata.
+•	Replication level of file
+•	Modification and access times of files
+•	Access permissions of files and directories
+•	block size of files
+•	The blocks constituting a file
+EditLogs – 
+•	EditLogs contains all the recent modifications made to the file system of most recent FsImage.
+•	When NameNode receives a create/update/delete request from the client. Then this request is first recorded to edits file.
+•	These modifications stores in memory as well as in edits files (edits files are stored on hard disk).
+•	If existing fsimage file gets merged with edits, we’ll get updated fsimage file. This process is called checkpointing and is carried out by Secondary Namenode.
+•	It takes fsimage and edits files from NameNode and returns updated fsimage file after merging.
+Secondary NameNode: 
+	This is not a backup for namenode .
+	Secondary NameNode download the FsImage and EditLogs from the NameNode. Then it merges EditLogs with the FsImage periodically.
+	It keeps edits log size within a limit. It stores the modified FsImage into persistent storage. Which we can use FsImage in the case of NameNode failure. 
+DataNode:
+	DataNode manages data storage of the system. Stores actual data file as blocks in HDFS on its own local disk. 
+	It is actual worker node, so it handles Read/Write/Data processing.
+	Take instructions from Master and performs creation/replication/deletion of data blocks. They perform all the block operation including periodic checksum. 
+	They receive instructions from the NameNode of where to put the blocks and how to put the blocks.
+	Sends signals to NameNode periodically (called as Heartbeat) to verify it is active.
+	Sends block reporting to the NameNode on cluster startup as well as periodically at every 10th Heartbeat.
+ 
+JobTracker (Not present in Hadoop 2.x):
+It Controls overall execution of map reduce jobs. The JobTracker is the service within Hadoop that farms out MapReduce tasks to specific nodes in the cluster, ideally the nodes that have the data, or at least are in the same rack.
+•	Client applications submit jobs to the Job tracker.
+•	The JobTracker talks to the NameNode to determine the location of the data.
+•	The JobTracker locates TaskTracker nodes with available slots at or near the data.
+•	The JobTracker submits the work to the chosen TaskTracker nodes.
+•	The TaskTracker nodes are monitored. If they do not submit heartbeat signals often enough, they are deemed to have failed and the work is scheduled on a different TaskTracker.
+•	A TaskTracker will notify the JobTracker when a task fails. The JobTracker decides what to do then: it may resubmit the job elsewhere, it may mark that specific record as something to avoid, and it may even blacklist the TaskTracker as unreliable.
+•	When the work is completed, the JobTracker updates its status.
+•	Client applications can poll the JobTracker for information.
+The JobTracker is a point of failure for the Hadoop MapReduce service. If it goes down, all running jobs are halted.
+TaskTracker (Not present in Hadoop 2.x):
+•	A TaskTracker is a node in the cluster that accepts tasks - Map, Reduce and Shuffle operations - from a JobTracker.
+•	Every TaskTracker is configured with a set of slots, these indicate the number of tasks that it can accept. 
+•	When the JobTracker tries to find somewhere to schedule a task within the MapReduce operations, it first looks for an empty slot on the same server that hosts the DataNode containing the data, and if not, it looks for an empty slot on a machine in the same rack.
+•	The TaskTracker spawns a separate JVM processes to do the actual work; this is to ensure that process failure does not take down the task tracker. 
+•	The TaskTracker monitors these spawned processes, capturing the output and exit codes. When the process finishes, successfully or not, the tracker notifies the JobTracker. 
+•	The TaskTrackers also send out heartbeat messages to the JobTracker, usually every few minutes, to reassure the JobTracker that it is still alive. 
+•	These message also inform the JobTracker of the number of available slots, so the JobTracker can stay up to date with where in the cluster work can be delegated.
+•	Below picture is about NameNode, Secondary NameNode, DataNode.
